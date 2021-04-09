@@ -1,6 +1,7 @@
 import os
 import cv2
 import face_recognition
+import numpy as np
 
 # IMPORT IMAGES
 path = 'student_images'
@@ -9,6 +10,10 @@ student_names = []
 myList = os.listdir(path)
 
 for rawImg in myList:
+    # To avoid files that are not images eg: .DS_store file
+    if rawImg.startswith('.'):
+        continue
+        
     current_img = cv2.imread(f'{path}/{rawImg}')
     images.append(current_img)
     student_names.append(os.path.splitext(rawImg)[0])
