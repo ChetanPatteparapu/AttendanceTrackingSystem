@@ -2,8 +2,11 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from tkinter import *
 from PIL import Image, ImageTk
+# BELOW IMPORT IS TO HASH PASSWORDS
+import hashlib
 import os
 import cv2
+import csv
 
 #LOG-IN PAGE
 class MainPage(tk.Frame):
@@ -27,15 +30,105 @@ class MainPage(tk.Frame):
         pwdText.place(x=450, y=500)
         
         # FUNCTION TO VERFIFY THE PROVIDED CREDENTIALS
-        def verifyUser():
-            if username_text.get() == 'admin' and pwdText.get() == 'admin':
-                controller.show_frame(IndexPage)
-            else:
-                messagebox.showinfo("Error", "Credentials didn't match!")
+        def verify_user():
+            user_name = username_text.get().strip()
+            user_pwd = pwdText.get().strip()
+            
+            encoded_pwd = hashlib.md5(user_pwd.encode("utf")).hexdigest()
+            
+            try:
+                with open("credentials.txt", "r") as file:
+                    creds = file.readlines()
+                    
+                    found = False
+                    
+                    for pair in creds:
+                        current_user, current_hash = pair.split(',')
+                        current_user = current_user.strip()
+                        current_hash = current_hash.strip()
+                        
+                        if user_name.__eq__(current_user) and encoded_pwd.__eq__(current_hash):
+                            found = True
+                            controller.show_frame(IndexPage)
+                            break
+                    
+                    if found == False:
+                        messagebox.showinfo("Error", "Sorry! Credentials didn't match!")
+            except:
+                messagebox.showinfo("Error", "Please enter correct information!")
         
-        enter = tk.Button(border, text="Enter", font=("Arial", 15), command=verifyUser)
-        enter.place(x=350, y=450)
+        enter = tk.Button(border, text="Enter", font=("Arial", 15), command=verify_user)
+        enter.place(x=300, y=450)
         
+        signup_button = tk.Button(border, text="Sign-up", font=('Arial', 15), command=lambda: controller.show_frame(SignUp))
+        signup_button.place(x=400, y=450)
+        
+class SignUp(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        
+        def save_credentials():
+            user_name = username_text.get().strip()
+            
+            user_pwd = pwdText.get().strip()
+            confirm_pwd = confirm_text.get().strip()
+            
+            if not user_pwd.__eq__(confirm_pwd) or len(user_name) < 1 or len(user_pwd) < 1:
+                messagebox.showinfo("Error", "Passwords didn't match!")
+                return
+            
+            if (user_exists(user_name)):
+                messagebox.showinfo("Error", "Username already exists!")
+                return
+            
+            encoded_pwd = hashlib.md5(user_pwd.encode("utf")).hexdigest()
+            
+            with open("credentials.txt", "a") as creds:
+                creds.write(f"{user_name},{encoded_pwd}\n")
+                messagebox.showinfo("Welcome","You are registered successfully!!")
+        
+        # BELOW METHOD IS TO CHECK IF THE USER ALREADY EXISTS IN THE FILE SYSTEM
+        def user_exists(user_name):
+            with open("credentials.txt", "r") as file:
+                creds = file.readlines()
+                    
+                for pair in creds:
+                    current_user, current_hash = pair.split(',')
+                    if user_name.__eq__(current_user):
+                        return True
+                
+                return False
+            
+        
+        # BORDER FRAME
+        border = tk.LabelFrame(self, text='Login', bg='ivory', bd=10, font=('Arial', 20))
+        border.pack(fill="both", expand="yes", padx=200, pady=100)
+        
+        # USERNAME LABEL AND USERNAME TEXTFIELD
+        username_label = tk.Label(border, text="Username", font=("DejaVu Sans Mono", 15), bg='ivory')
+        username_label.place(x=350, y=100)
+        username_text = tk.Entry(border, width=30, bd=5)
+        username_text.place(x=245, y=150)
+        
+        # PASSWORD LABEL AND PASSWORLD TEXTFIELD
+        pwdLabel = tk.Label(border, text="Password", font=("DejaVu Sans Mono", 15), bg='ivory')
+        pwdLabel.place(x=350, y=225)
+        pwdText = tk.Entry(self, width=30, show="*", bd=5)
+        pwdText.place(x=450, y=400)
+        
+        # LABEL FOR CONFIRMING THE PASSWORD
+        confirm_label = tk.Label(border, text=" Confirm Password", font=("DejaVu Sans Mono", 15), bg='ivory')
+        confirm_label.place(x=320, y=350)
+        confirm_text = tk.Entry(self, width=30, show="*", bd=5)
+        confirm_text.place(x=450, y=525)
+        
+        # BELOW IS THE BUTTON TO FINISH THE UPLOAD
+        register_button = tk.Button(border, text="Register", font=("DejaVu Sans Mono", 20), bg='ivory', command=save_credentials)
+        register_button.place(x=600, y=500)
+    
+        # BUTTON
+        back_button = tk.Button(self, text="Back", font=('Arial', 15), command=lambda: controller.show_frame(MainPage))
+        back_button.place(x=1000, y=725)
 
 # MENU PAGE
 class IndexPage(tk.Frame):
@@ -65,7 +158,7 @@ class IndexPage(tk.Frame):
         search_record = tk.Button(self, text="Search Record", font=("Arial", 25), command=lambda: controller.show_frame(SearchRecord))
         search_record.place(x=500, y=475)
         
-        # BUTTON TO QUI
+        # BUTTON
         back_button = tk.Button(self, text="Back", font=('Arial', 15), command=lambda: controller.show_frame(MainPage))
         back_button.place(x=1000, y=725)
 
@@ -205,7 +298,6 @@ class SearchRecord(tk.Frame):
             if not selected_path.__eq__(file_path):
                 cache_students(selected_path)
             
-            
             if student_name in entries:
                 result = entries.get(student_name)
             else:
@@ -213,6 +305,30 @@ class SearchRecord(tk.Frame):
             
             display_label = tk.Label(border, text=f"Time: {result}", font=("Arial", 15), bg='ivory')
             display_label.place(x=330, y=340)
+           
+        # BELOW FUNCTION IS TO DISPLAY THE CSV FILE IN FULL
+        def display_record():
+            if len(filelist) < 1:
+                return
+            
+            selected_path = clicked.get()
+            
+            if not selected_path.__eq__(file_path):
+                cache_students(selected_path)
+                
+            # NOW DISPLAY THE SELECTED CSV FILE
+            with open(f"attendance_register/{selected_path}", newline = "") as record:
+                attendance = csv.reader(record)
+                
+                i = 0
+                for col in attendance:
+                    j = 0
+                    for row in col:
+                        label = tk.Label(border, width = 10, height = 2, \
+                               text = row, relief = tk.RIDGE)
+                        label.grid(row = i, column = j)
+                        j += 1
+                    i += 1
         
         def cache_students(selected_path):
             global file_path
@@ -239,7 +355,7 @@ class SearchRecord(tk.Frame):
         # BELOW IS THE PATH FOR THE ATTENDANCE REGISTER
         directory = "attendance_register"
         
-        # ADD EVERY FILE ON TO THE FILELIST FOR SELECTION
+        # ADD EVERY FILE ON TO THE FILE-LIST FOR SELECTION
         filelist = [fname for fname in os.listdir(directory) if fname.endswith('.csv')]
         filelist.reverse()
         
@@ -250,6 +366,10 @@ class SearchRecord(tk.Frame):
         # DROP-DOWN MENU FOR CHOOSING
         drop = OptionMenu(border, clicked, *filelist)
         drop.place(x=330, y=100)
+        
+        # BELOW IS THE BUTTON FOR OPENING THE ATTENDANCE RECORD ON A GIVEN DAY
+        open_button = tk.Button(border, text="Open", font=('Arial', 10), command=display_record)
+        open_button.place(x=480, y=100)
         
         # LABEL FOR TEXT BOX
         student_name_label = tk.Label(border, text="Student Name", font=("DejaVu Sans Mono", 15), bg='ivory')
@@ -282,7 +402,7 @@ class Application(tk.Tk):
         window.grid_columnconfigure(0, minsize = 1200)
         
         self.frames = {}
-        for F in (MainPage, IndexPage, RegisterStudent, RemoveStudent, SearchRecord):
+        for F in (MainPage, SignUp, IndexPage, RegisterStudent, RemoveStudent, SearchRecord):
             frame = F(window, self)
             self.frames[F] = frame
             frame.grid(row = 0, column=0, sticky="nsew")
