@@ -1,7 +1,8 @@
 import face_recognition
 import numpy as np
-import attendance
 import cv2
+
+import attendance
 import images
 
 
@@ -18,9 +19,8 @@ marked = set()
 while True:
     ret,frame = cap.read()
     
+    # BELOW IS TO AVOID THE CASE WHEN THERE ARE NO IMAGES
     if len(listOfEncodings) > 0:
-        # FOR PERFORMANCE RESIZE THE FRAME TO SMALL PIXELS
-        frame_modified = cv2.resize(frame, (0,0), None, 0.25, 0.25)
         frame_modified = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         face_points = face_recognition.face_locations(frame_modified)
@@ -39,7 +39,7 @@ while True:
 
                 cv2.rectangle(frame,(x1,y1),(x2,y2),(255,0,255),2)
                 cv2.rectangle(frame, (x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
-                cv2.putText(frame,name, (x1+6, y2-6), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255),2)
+                cv2.putText(frame,name, (x1+6, y2-6), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255),2)
                 
                 if name in marked:
                     continue

@@ -1,12 +1,14 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from tkinter import *
-from PIL import Image, ImageTk
 # BELOW IMPORT IS TO HASH PASSWORDS
 import hashlib
 import os
 import cv2
 import csv
+
+# FILETYPE IMPORT IS FOR CHECKING VALID IMAGE TYPES
+import filetype
 
 #LOG-IN PAGE
 class MainPage(tk.Frame):
@@ -167,8 +169,6 @@ class RegisterStudent(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
-        self.configure(bg='Tomato')
-        
         # BORDER FRAME FOR REGISTERING
         border = tk.LabelFrame(self, text='Registration', bg='ivory', bd=10, font=('Arial', 20))
         border.pack(fill="both", expand="yes", padx=200, pady=100)
@@ -196,25 +196,47 @@ class RegisterStudent(tk.Frame):
             student_name = student_name_text.get()
             global filepath
             
+            # PATH WHERE YOU WANT TO SAVE THE IMAGE
+            path = 'student_images'
+            
             if len(filepath) < 1 or len(student_name) < 1:
                 messagebox.showinfo("Error", "Please choose an image to continue!")
             
             extension = filepath.split(".")[1]
             
-            if (extension != 'jpg' and extension != 'png' and extension != 'jpeg'):
+            # CHECK FOR STUDENT EXISTENCE
+            if student_exists(student_name, path):
+                messagebox.showinfo("Error", "Student Already Registered!")
+                return
+            
+            if not filetype.is_image(filepath):
                 messagebox.showinfo("Error", "Please upload a valid Image in JPG or PNG")
+                return
                 
             
             # OPEN THE IMAGE USING CV2 MODULE
             image = cv2.imread(filepath)
             
-            # PATH WHERE YOU WANT TO SAVE THE IMAGE
-            path = 'student_images'
             
             # SAVE THE IMAGE ON STUDENT NAME OR STUDENT ID TO MAKE IT UNIQUE
             cv2.imwrite(os.path.join(path, f"{student_name}.{extension}"), image)
             
             messagebox.showinfo("Registraion Done", "Student Successfully Registered")
+        
+        def student_exists(student_name, path):
+            registered_students = os.listdir(path)
+            
+            for student in registered_students:
+                if student.startswith('.'):
+                    continue
+                
+                # SPLIT AND PICK THE NAME
+                name = student.split('.')[0]
+                if name.__eq__(student_name):
+                    return True
+            
+            return False
+            
         
         # BELOW IS THE BUTTON TO CHOOSE THE IMAGE
         choose_button = tk.Button(border, text="choose image", font=("DejaVu Sans Mono", 15), bg='ivory', command=open_file)
@@ -231,8 +253,6 @@ class RegisterStudent(tk.Frame):
 class RemoveStudent(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        
-        self.configure(bg='Tomato')
         
         # BORDER FRAME FOR REGISTERING
         border = tk.LabelFrame(self, text='Remove Student', bg='ivory', bd=10, font=('Arial', 20))
@@ -282,8 +302,6 @@ class RemoveStudent(tk.Frame):
 class SearchRecord(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        
-        self.configure(bg='Tomato')
         
         def search_student():
             student_name = student_name_text.get()

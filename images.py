@@ -16,7 +16,7 @@ for rawImg in myList:
         
     current_img = cv2.imread(f'{path}/{rawImg}')
     images.append(current_img)
-    student_names.append(os.path.splitext(rawImg)[0])
+    student_names.append(rawImg.split('.')[0])
     
 # GET ENCODINGS OF EXISTING IMAGES IN THE LIST    
 def getEncodingOfExistingImages():
