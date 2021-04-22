@@ -38,7 +38,7 @@ while True:
                 
 
                 cv2.rectangle(frame,(x1,y1),(x2,y2),(255,0,255),2)
-                cv2.rectangle(frame, (x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
+                cv2.rectangle(frame, (x1,y2-35),(x2,y2),(0,0,0),cv2.FILLED)
                 cv2.putText(frame,name, (x1+6, y2-6), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255),2)
                 
                 if name in marked:

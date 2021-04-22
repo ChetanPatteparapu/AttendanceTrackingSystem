@@ -60,10 +60,13 @@ class MainPage(tk.Frame):
                 messagebox.showinfo("Error", "Please enter correct information!")
         
         enter = tk.Button(border, text="Enter", font=("Arial", 15), command=verify_user)
-        enter.place(x=300, y=450)
+        enter.place(x=220, y=450)
         
         signup_button = tk.Button(border, text="Sign-up", font=('Arial', 15), command=lambda: controller.show_frame(SignUp))
-        signup_button.place(x=400, y=450)
+        signup_button.place(x=303, y=450)
+        
+        change_pwd_button = tk.Button(border, text="Change Password", font=('Arial', 15), command=lambda: controller.show_frame(ChangePassword))
+        change_pwd_button.place(x=400, y=450)
         
 class SignUp(tk.Frame):
     def __init__(self, parent, controller):
@@ -128,6 +131,101 @@ class SignUp(tk.Frame):
         register_button = tk.Button(border, text="Register", font=("DejaVu Sans Mono", 20), bg='ivory', command=save_credentials)
         register_button.place(x=600, y=500)
     
+        # BUTTON
+        back_button = tk.Button(self, text="Back", font=('Arial', 15), command=lambda: controller.show_frame(MainPage))
+        back_button.place(x=1000, y=725)
+
+class ChangePassword(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        
+        def is_empty(text):
+            return len(text) == 0
+        
+        def change_password():
+            user_name = username_text.get()
+            current_pwd = pwdText.get()
+            new_pwd = newPwdText.get()
+            
+            if is_empty(user_name) or is_empty(current_pwd) or is_empty(new_pwd):
+                messagebox.showinfo("Error", "Please enter all the fields!")
+                return
+            
+            if current_pwd.__eq__(new_pwd):
+                messagebox.showinfo("Error", "Password cannot be the same! Enter a new password")
+                return
+            
+            encoded_pwd = hashlib.md5(current_pwd.encode("utf")).hexdigest()
+            
+            # CHECK IF THE USERNAME AND PASSWORD MATCHES 
+            try:
+                with open("credentials.txt", "r") as file:
+                    creds = file.readlines()
+                    
+                    found = False
+                    
+                    for pair in creds:
+                        current_user, current_hash = pair.split(',')
+                        current_user = current_user.strip()
+                        current_hash = current_hash.strip()
+                        
+                        if user_name.__eq__(current_user) and encoded_pwd.__eq__(current_hash):
+                            found = True
+                            break
+                    
+                    if found == False:
+                        messagebox.showinfo("Error", "Sorry! Credentials didn't match!")
+                    else:
+                        update_password(user_name, new_pwd)
+            except:
+                messagebox.showinfo("Error", "Please enter correct information!")
+                
+        
+        def update_password(user_name, new_pwd):
+            with open("credentials.txt", "r") as f:
+                lines = f.readlines()
+                
+            with open("credentials.txt", "w") as f:
+                for pair in lines:
+                    current_user = pair.split(',')[0]
+                    current_user = current_user.strip()
+                    
+                    if current_user != user_name:
+                        f.write(pair)
+                        
+            new_encoded_pwd = hashlib.md5(new_pwd.encode("utf")).hexdigest()
+                        
+            with open("credentials.txt", "a") as f:
+                f.write(f"{user_name},{new_encoded_pwd}\n")
+                messagebox.showinfo("Welcome","The password has changed successfully!!")
+            
+        
+        # BORDER FRAME
+        border = tk.LabelFrame(self, text='Login', bg='ivory', bd=10, font=('Arial', 20))
+        border.pack(fill="both", expand="yes", padx=200, pady=100)
+        
+        # USERNAME LABEL AND USERNAME TEXTFIELD
+        username_label = tk.Label(border, text="Username", font=("DejaVu Sans Mono", 15), bg='ivory')
+        username_label.place(x=350, y=100)
+        username_text = tk.Entry(border, width=30, bd=5)
+        username_text.place(x=245, y=150)
+        
+        # PASSWORD LABEL AND PASSWORLD TEXTFIELD
+        pwdLabel = tk.Label(border, text="Current Password", font=("DejaVu Sans Mono", 15), bg='ivory')
+        pwdLabel.place(x=325, y=225)
+        pwdText = tk.Entry(self, width=30, show="*", bd=5)
+        pwdText.place(x=450, y=400)
+        
+        # LABEL FOR CONFIRMING THE PASSWORD
+        newPwdLabel = tk.Label(border, text=" New Password", font=("DejaVu Sans Mono", 15), bg='ivory')
+        newPwdLabel.place(x=320, y=350)
+        newPwdText = tk.Entry(self, width=30, show="*", bd=5)
+        newPwdText.place(x=450, y=525)
+        
+        # BELOW IS THE BUTTON TO FINISH THE UPLOAD
+        change_button = tk.Button(border, text="Change", font=("DejaVu Sans Mono", 20), bg='ivory', command=change_password)
+        change_button.place(x=600, y=500)
+        
         # BUTTON
         back_button = tk.Button(self, text="Back", font=('Arial', 15), command=lambda: controller.show_frame(MainPage))
         back_button.place(x=1000, y=725)
@@ -420,7 +518,7 @@ class Application(tk.Tk):
         window.grid_columnconfigure(0, minsize = 1200)
         
         self.frames = {}
-        for F in (MainPage, SignUp, IndexPage, RegisterStudent, RemoveStudent, SearchRecord):
+        for F in (MainPage, SignUp, IndexPage, RegisterStudent, RemoveStudent, SearchRecord, ChangePassword):
             frame = F(window, self)
             self.frames[F] = frame
             frame.grid(row = 0, column=0, sticky="nsew")
