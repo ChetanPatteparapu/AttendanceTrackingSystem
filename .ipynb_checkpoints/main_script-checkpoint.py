@@ -299,6 +299,7 @@ class RegisterStudent(tk.Frame):
             
             if len(filepath) < 1 or len(student_name) < 1:
                 messagebox.showinfo("Error", "Please choose an image to continue!")
+                return
             
             extension = filepath.split(".")[1]
             
